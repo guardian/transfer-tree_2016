@@ -97,7 +97,7 @@ var filterArr = function (s){
         tempSell = _.groupBy(sellArr, s);
    }
     tempSell = getTotalFee(tempSell);
-    console.log(s,tempSell);
+    console.log("look at moving this data into treemap data (json?????????????) - may need to convert to object with a name at top level plus a subitem containing entries",s,tempSell);
 }
 
 

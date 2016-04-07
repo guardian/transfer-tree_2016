@@ -11,6 +11,7 @@ var _ = lodash;
 
 var shareFn = share('Interactive title', 'http://gu.com/p/URL', '#Interactive');
 var allTransfers;
+var premOnlyArr=[];
 var starTransfers;
 var sellArr=[];
 var buyArr=[];
@@ -50,13 +51,56 @@ function modelTransfersData(){
     _.forEach(allTransfers, function(item){
         item.fee = checkForNumber(item.price)
         item.ageGroup = getAgeGroup(item)
-        buySellSort(item)
+        item.sorted = false;
+        item.premBuy = false;
+        item.premSell = false;
+        buySellSort(item);
     })
 
-    filterArr('ageGroup');
+    _.forEach(allTransfers, function(item){ 
+      var obj = item; var obj2 = item;
+        if (item.premBuy && item.premSell){
+         
+          console.log("-------------------PREM BUY PREM SELL - TRANSFER "+item.playername+" from "+item.from+" to "+item.to)
+        }
 
-    initView()
-   // console.log(buyArr.length, sellArr.length, unsortedArr.length, unsortedArr)
+
+        if (item.premBuy && !item.premSell){
+           console.log("prem buy only - TRANSFER "+item.playername+" from "+item.from+" to "+item.to)
+
+        }
+
+        if (!item.premBuy && item.premSell){
+          console.log("prem sell only - TRANSFER "+item.playername+" from "+item.from+" to "+item.to)
+
+        }
+    })
+
+   console.log(premOnlyArr)
+}
+
+
+function buySellSort(item){
+
+    _.forEach(premClubs, function(premClub){    
+        if(item.to == premClub.name)
+        { 
+           item.premBuy = true; 
+        }
+       
+    })
+
+    _.forEach(premClubs, function(premClub){    
+       
+        if(item.from == premClub.name)
+        {             
+           item.premSell = true; 
+        }
+    })
+
+   
+
+    if(item.sorted == false){ unsortedArr.push(item); }
 }
 
 function initView(){
@@ -66,11 +110,8 @@ function initView(){
 }
 
 function addListeners(){
-
+//window.addEventListener("resize", checkWin);
   var interactiveContainer = document.getElementById("interactiveContainer");
-       
-  //window.addEventListener("resize", checkWin);
- 
   document.getElementById("filterDropdown").addEventListener('change', filterChanged);
 
 }
@@ -85,27 +126,11 @@ function filterChanged(event) {
 }
 
 var filterArr = function (s){
-   var tempBuy, buyKey = s, tempSell, sellKey = s; 
-
-   if (s=='club'){
-        buyKey = 'to';
-        sellKey = 'from';
-        
-   } else if (s=='league'){
-        buyKey = 'newleague';
-        sellKey = 'previousleague';
-        
-   }
-
-  tempBuy = _.groupBy(buyArr, buyKey);
-  tempSell = _.groupBy(sellArr, sellKey);
- 
-  tempSell = nestData(allTransfers,buyKey);
-  // tempBuy = nestData(sellArr,sellKey);
-
-  // new treeMap(tempSell)
+  var f; //f stands for filtered
+    if (s=='club'){ s ='premClub' }
+    f = nestData(allTransfers,s);
   
-  console.log(s,tempSell);
+  console.log(s,f);
 }
 
 
@@ -129,19 +154,6 @@ function getTotalFee(a){
 
     a.totalFees = totalFee;
     return a; 
-}
-
-
-function buySellSort(item){
-    item.sorted = false;
-    
-    _.forEach(premClubs, function(premClub){    
-        if(item.to == premClub.name){ item.buyOrSell = 'b'; item.sorted = true; buyArr.push(item); }
-        if(item.from == premClub.name){  item.buyOrSell = 's'; item.sorted = true; sellArr.push(item); }
-
-    })
-
-    if(item.sorted == false){ unsortedArr.push(item); }
 }
 
 function getAgeGroup(item){

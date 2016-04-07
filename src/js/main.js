@@ -2,6 +2,8 @@ import reqwest from 'reqwest'
 import mainHTML from './text/main.html!text'
 import dropdownHTML from './text/dropdown.html!text'
 import share from './lib/share'
+
+import treeMap from './components/treeMap';
 import lodash from 'lodash';
 import d3 from 'd3';
 
@@ -83,23 +85,40 @@ function filterChanged(event) {
 }
 
 var filterArr = function (s){
-   var tempBuy;
-   var tempSell; 
+   var tempBuy, buyKey = s, tempSell, sellKey = s; 
 
    if (s=='club'){
-        tempBuy = _.groupBy(buyArr, 'to');
-        tempSell = _.groupBy(sellArr, 'from');
+        buyKey = 'to';
+        sellKey = 'from';
+        
    } else if (s=='league'){
-        tempBuy = _.groupBy(buyArr, 'newleague');
-        tempSell = _.groupBy(sellArr, 'previousleague');
-   }else {
-        tempBuy = _.groupBy(buyArr, s);
-        tempSell = _.groupBy(sellArr, s);
+        buyKey = 'newleague';
+        sellKey = 'previousleague';
+        
    }
-    tempSell = getTotalFee(tempSell);
-    console.log("look at moving this data into treemap data (json?????????????) - may need to convert to object with a name at top level plus a subitem containing entries",s,tempSell);
+
+  tempBuy = _.groupBy(buyArr, buyKey);
+  tempSell = _.groupBy(sellArr, sellKey);
+ 
+  tempSell = nestData(allTransfers,buyKey);
+  // tempBuy = nestData(sellArr,sellKey);
+
+  // new treeMap(tempSell)
+  
+  console.log(s,tempSell);
 }
 
+
+function nestData(a,k){
+console.log(a,k)
+
+  var nest = d3.nest()
+    .key(function(d){ console.log(d[k]); return d[k] })
+    .entries(a);
+
+  return nest;
+
+}
 
 function getTotalFee(a){
     var totalFee=0;
@@ -109,7 +128,6 @@ function getTotalFee(a){
     })
 
     a.totalFees = totalFee;
-
     return a; 
 }
 
@@ -118,10 +136,11 @@ function buySellSort(item){
     item.sorted = false;
     
     _.forEach(premClubs, function(premClub){    
-        if(item.to == premClub.name){ item.sorted = true; buyArr.push(item); }
-        if(item.from == premClub.name){ item.sorted = true; sellArr.push(item); }
+        if(item.to == premClub.name){ item.buyOrSell = 'b'; item.sorted = true; buyArr.push(item); }
+        if(item.from == premClub.name){  item.buyOrSell = 's'; item.sorted = true; sellArr.push(item); }
 
     })
+
     if(item.sorted == false){ unsortedArr.push(item); }
 }
 

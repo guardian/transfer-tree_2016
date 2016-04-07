@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg id="leftArrowSVG"  x="0px" y="0px" width="17px" height="17px"
+	 viewBox="0 0 17 17" xml:space="preserve">
+<g id="Page-1" sketch:type="MSPage">
+	<path id="leftArrowSVGFill" fill="#FFFFFF" d="M1.342,8.15l0.987-0.987L8.5,1l0.665,0.664l-5.148,6.15h13.109
+		v1.371H4.016l5.149,6.151L8.5,16L2.33,9.83l-0.987-0.98L1.342,8.15"/>
+</g>
+</svg>

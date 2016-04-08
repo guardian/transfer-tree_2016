@@ -17,6 +17,7 @@ var sellArr=[];
 var buyArr=[];
 var unsortedArr=[];
 var sortedArr=[];
+var treeMapChart;
 
 var premClubs= [ {name:'Arsenal', hex:'#000000'},{ name:'Aston Villa', hex:'#00001D'},{ name:'Bournemouth',hex:'#001E43'},{ name:'Chelsea',hex:'#00456E'},{ name:'Crystal Palace',hex:'#41709D'},{ name:'Everton',hex:'#739ECE'},{ name:'Leicester City',hex:'#000232'},{ name:'Liverpool',hex:'#003C51'},{ name:'Manchester City',hex:'#a4cfff'},{ name:'Manchester United',hex:'#1c4c00'},{ name:'Newcastle United',hex:'#4BC6DF'},{ name:'Norwich City',hex:'#00677E'},{ name:'Stoke City', hex:'#062300'},{ name:'Southampton',hex:'#658299'},{ name:'Sunderland',hex:'#002519'},{ name:'Swansea City',hex:'#004D3F'},{ name:'Tottenham Hotspur',hex:'#377A6A'},{ name:'West Bromwich Albion',hex:'#66A998'},{ name:'Watford', hex:'#96DBC9' },{ name:'West Ham United', hex:'#41709D' }];
 
@@ -27,8 +28,7 @@ export function init(el, context, config, mediator) {
         url: 'https://interactive.guim.co.uk/docsdata/1oHfE7wk0FYbbMPnbqvTNYOyLJij8WBOFl5MXa5kpa_A.json',
         type: 'json',
         crossOrigin: true,
-        //success: console.log(resp)
-         success: (resp) => dataInit(resp) //injectTreeMapHTML
+         success: (resp) => dataInit(resp)
     });
 
     [].slice.apply(el.querySelectorAll('.interactive-share')).forEach(shareEl => {
@@ -40,8 +40,7 @@ export function init(el, context, config, mediator) {
 function dataInit(resp){
     allTransfers = resp.sheets.Data;
     starTransfers = resp.sheets.Star_Men;
-
-    allTransfers = _.uniqBy(allTransfers, 'playername'); //clean up data
+    allTransfers = _.uniqBy(allTransfers, 'playername'); //clean up data - remove duplicates
 
     modelTransfersData();
 }
@@ -49,59 +48,59 @@ function dataInit(resp){
 function modelTransfersData(){
     
     _.forEach(allTransfers, function(item){
-        item.fee = checkForNumber(item.price)
-        item.ageGroup = getAgeGroup(item)
-        item.sorted = false;
+        item.fee = checkForNumber(item.price);
+        item.ageGroup = getAgeGroup(item);
         item.premBuy = false;
         item.premSell = false;
         buySellSort(item);
     })
 
-    _.forEach(allTransfers, function(item){ 
-      var obj = item; var obj2 = item;
-        if (item.premBuy && item.premSell){
-         
-          console.log("-------------------PREM BUY PREM SELL - TRANSFER "+item.playername+" from "+item.from+" to "+item.to)
-        }
-
-
-        if (item.premBuy && !item.premSell){
-           console.log("prem buy only - TRANSFER "+item.playername+" from "+item.from+" to "+item.to)
-
-        }
-
-        if (!item.premBuy && item.premSell){
-          console.log("prem sell only - TRANSFER "+item.playername+" from "+item.from+" to "+item.to)
-
-        }
-    })
-
-   console.log(premOnlyArr)
+   initView()
 }
 
 
 function buySellSort(item){
-
+    //handle entries bought by prem club
     _.forEach(premClubs, function(premClub){    
         if(item.to == premClub.name)
-        { 
-           item.premBuy = true; 
-        }
-       
+          { 
+            
+            item.premBuy = true;
+            item.premClub = item.to;
+             
+          }  
     })
 
+    //handle entries sold by prem club
     _.forEach(premClubs, function(premClub){    
-       
         if(item.from == premClub.name)
-        {             
-           item.premSell = true; 
-        }
+          {             
+             item.premSell = true; 
+             item.premClub = item.from;  
+          }
     })
 
-   
-
-    if(item.sorted == false){ unsortedArr.push(item); }
+    //handle entries bought by prem club and sold by prem club
+    if(item.premBuy && item.premSell){ 
+        var newObj = {} // declare a new object - duplicating item hasn't worked!!!!!
+        newObj.playername=item.playername;
+        newObj.age=item.age;
+        newObj.ageGroup=item.ageGroup;
+        newObj.fee = item.fee;
+        newObj.from=item.from;
+        newObj.nationality=item.nationality;
+        newObj.newleague=item.newleague;
+        newObj.position=item.position;
+        newObj.premBuy=true;
+        newObj.premSell=true;
+        newObj.previousleague=item.previousleague;
+        newObj.price=item.price;
+        newObj.to=item.to;
+        newObj.premClub = item.to; //toggle premClub value
+        allTransfers.push(newObj); //push newObj to bucket array
+    }  
 }
+
 
 function initView(){
     var dropDownEl = document.getElementById('dropDownHolder');
@@ -120,28 +119,51 @@ function addListeners(){
 function filterChanged(event) {
   //document.getElementById("detailView").style.display="none";
    // $('#treemap-view').css('height', 'auto');
-
     var varIn = this.value;
     filterArr(varIn);
 }
 
 var filterArr = function (s){
   var f; //f stands for filtered
-    if (s=='club'){ s ='premClub' }
-    f = nestData(allTransfers,s);
+    if (s=='club'){ 
+      s ='premClub' 
+    }
   
-  console.log(s,f);
+  f = nestChildren(allTransfers,s);
+
+  treeMapChart = new treeMap(f);
 }
 
 
-function nestData(a,k){
-console.log(a,k)
+function nestChildren(data,k){
 
-  var nest = d3.nest()
-    .key(function(d){ console.log(d[k]); return d[k] })
-    .entries(a);
+  var root = {};
+  var children = []
+  root.name='flare';
 
-  return nest;
+  var tempArr = _.groupBy(data, k);
+  var jObj = {};
+  _.forEach(tempArr, function(obj){
+    jObj.name = obj[0][k]
+    jObj.children = obj;
+    children.push(jObj);
+  })
+
+  root.children = children;
+
+  root = JSON.stringify(root);
+  console.log(root);
+
+
+
+  // var dataJSON = d3.nest()
+  //       .key(function(d) { return d[k]; })
+  //       .key(function(d) { return d['playername']; })
+  //       .map(data);  
+
+  // console.log(dataJSON)
+
+
 
 }
 

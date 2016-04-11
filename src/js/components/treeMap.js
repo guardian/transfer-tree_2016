@@ -55,20 +55,22 @@ export default function treeMap(data){
           .attr("y", 6 - margin.top)
           .attr("dy", ".75em");
 
-      d3.json(data, function(root) {
-
-        console.log(data)
-
+      d3.json(data, function() {
+        var root = data;
+        console.log(root)//root.children = data.children;
         initialize(root);
         accumulate(root);
         layout(root);
         display(root);
 
         function initialize(root) {
-          root.x = root.y = 0;
+          root.x = 0;
+          root.y = 0;
           root.dx = width;
           root.dy = height;
           root.depth = 0;
+
+          console.log(data)
         }
 
         // Aggregate the values for internal nodes. This is normally done by the
@@ -76,9 +78,10 @@ export default function treeMap(data){
         // We also take a snapshot of the original children (_children) to avoid
         // the children being overwritten when when layout is computed.
         function accumulate(d) {
-          return (d._children = d.values)
-              ? d.value = d.children.reduce(function(p, v) { return p + accumulate(v); }, 0)
-              : d.value;
+          console.log(d)
+          // return (d._children = d.values)
+          //     ? d.value = d.children.reduce(function(p, v) { return p + accumulate(v); }, 0)
+          //     : d.value;
         }
 
         // Compute the treemap layout recursively such that each group of siblings
@@ -103,6 +106,8 @@ export default function treeMap(data){
         }
 
         function display(d) {
+          console.log(d)
+
           grandparent
               .datum(d.parent)
               .on("click", transition)
@@ -114,10 +119,10 @@ export default function treeMap(data){
               .attr("class", "depth");
 
           var g = g1.selectAll("g")
-              .data(d._children)
-            .enter().append("g");
+              .data(function(d){  return d._children})
+              .enter().append("g");
 
-          g.filter(function(d) { return d._children; })
+          g.filter(function(d) { console.log(d); return d._children; })
               .classed("children", true)
               .on("click", transition);
 

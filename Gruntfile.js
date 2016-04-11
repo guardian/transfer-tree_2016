@@ -192,7 +192,7 @@ module.exports = function(grunt) {
             server: {
                 options: {
                     hostname: '0.0.0.0',
-                    port: 8000,
+                    port: 8001,
                     base: 'build',
                     middleware: function (connect, options, middlewares) {
                         // inject a custom middleware http://stackoverflow.com/a/24508523

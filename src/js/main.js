@@ -49,6 +49,7 @@ function modelTransfersData(){
     
     _.forEach(allTransfers, function(item){
         item.fee = checkForNumber(item.price);
+        item.treeSize = checkForNumber(item.price) + 1000000; // add 1,000,000 so zero values show in treemap
         item.ageGroup = getAgeGroup(item);
         item.premBuy = false;
         item.premSell = false;
@@ -87,7 +88,8 @@ function buySellSort(item){
         newObj.age=item.age;
         newObj.ageGroup=item.ageGroup;
         newObj.fee = item.fee;
-        newObj.from=item.from;
+        newObj.treeSize = item.treeSize;
+        newObj.from = item.from;
         newObj.nationality=item.nationality;
         newObj.newleague=item.newleague;
         newObj.position=item.position;
@@ -139,29 +141,50 @@ function nestChildren(data,k){
 
   var root = {};
   var children = []
-  root.name='flare';
+  root.name='root';
 
-  var tempArr = _.groupBy(data, k);
-  var jObj = {};
-  _.forEach(tempArr, function(obj){
-    jObj.name = obj[0][k]
-    jObj.children = obj;
-    children.push(jObj);
-  })
+ 
+  var dataChildren = d3.nest()
+        .key(function(d) {  return d[k]; }) //console.log(d);
+            .rollup(function(values) {
+              return {
+                totalFee: Math.round(d3.sum(values, function(d) { return d.fee })),
+                size: (function(d) { return d.treeSize }),
+                values : values
+              };
+            })
+       .entries(data);  
 
-  root.children = children;
+        // .map(data);
 
-  root = JSON.stringify(root);
-  console.log(root);
+        //.key(function(d) {  return d.playername; })
+
+        
+
+        // _.forEach(dataChildren, function(child){ 
+        //   //child.name = child.name
+        //   //child.children = obj;
+        //   //child.totalFee = _.sumBy(child.values, 'fee');
+        //   //children.push(jObj);
+        // })
 
 
 
-  // var dataJSON = d3.nest()
-  //       .key(function(d) { return d[k]; })
-  //       .key(function(d) { return d['playername']; })
-  //       .map(data);  
+        //root = JSON.stringify(root);
+        //console.log(root);
 
-  // console.log(dataJSON)
+
+
+  root._children = dataChildren;
+
+  root.children = dataChildren;
+
+  root.values = dataChildren;
+
+
+  console.log(root)
+
+  return(root)
 
 
 
